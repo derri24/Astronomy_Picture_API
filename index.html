@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>astronomy</title>
+    <link href="style.css" rel="stylesheet"/>
+    <link rel="short icon" href="astronomy.ico">
+</head>
+<body onload="loadPage()">
+<div class="center margin-top-30">
+    <input id="start-date" type="date" class="search-box" required>
+    <input id="end-date" type="date" class="search-box" required>
+    <button type="submit" class="btn-blue btn" onclick="search()">SEARCH</button>
+    <img id="gif" class="size-gif" src="loading.gif">
+
+    <h1>ASTRONOMY PICTURE OF THE DAY</h1>
+    <h3>Each day a different image or photograph of our fascinating universe is featured, along with a brief explanation
+        written by a professional astronomer.</h3>
+    <div class="margin-lr display-inline-block">
+        <div id="control-arrow" class="display-flex">
+            <a id="left-arrow" href="#" class="control-arrow" onclick="dec()"><b>< </b></a>
+            <p id="date" class="margin-10px">Date</p>
+            <a id="right-arrow" href="#" class="control-arrow" onclick="inc()"><b> ></b></a>
+        </div>
+    </div>
+    <br>
+
+    <div id="div-image"><img id="image" class="margin-lr display-block" src=""></div>
+    <div id="div-video">
+        <iframe id="video" controls="controls" width="800" height="450" src=""></iframe>
+    </div>
+
+    <h1 id="title"></h1>
+    <p id="information" class="info-format-1200px">info</p>
+    <br>
+</div>
+
+</div>
+</body>
+</html>
+
+<script>
+
+    let index = 0;
+    let length = 0;
+
+    function inc() {
+        if (index < length - 1) {
+            index++;
+            work();
+        }
+    }
+
+    function dec() {
+        if (index > 0) {
+            index--;
+            work();
+        }
+    }
+
+    function search() {
+        work();
+        index = 0;
+    }
+
+    function getTodayDate() {
+        let today = new Date();
+        let dd = String(today.getDate()).padStart(2, '0');
+        let mm = String(today.getMonth() + 1).padStart(2, '0');
+        let yyyy = today.getFullYear();
+        today = yyyy + '-' + mm + '-' + dd;
+        return today;
+    }
+
+    function getData(data) {
+        length = data.length;
+        if (data.code >= 300 && data.code < 600) {
+            alert("Ошибка! Некорректный запрос!");
+            return;
+        }
+        document.getElementById("date").innerHTML = data[index].date;
+        document.getElementById("title").innerHTML = data[index].title;
+        document.getElementById("information").innerHTML = data[index].explanation;
+
+        if (data[index].media_type !== "image") {
+            document.getElementById("video").src = data[index].url;
+            document.getElementById("div-image").setAttribute('hidden', 'true');
+            document.getElementById("div-video").removeAttribute('hidden');
+        } else {
+            document.getElementById("image").src = data[index].url;
+            document.getElementById("div-video").setAttribute('hidden', 'true');
+            document.getElementById("div-image").removeAttribute('hidden');
+        }
+    }
+
+    async function work() {
+        let end_date;
+        let start_date;
+        if (localStorage.length > 0) {
+            start_date = document.getElementById("start-date").value;
+            end_date = document.getElementById("end-date").value;
+        } else {
+            start_date = getTodayDate();
+            end_date = getTodayDate();
+        }
+
+        localStorage.setItem('start-key', start_date);
+        localStorage.setItem('end-key', end_date);
+        localStorage.setItem('index-key', index);
+
+        document.getElementById("start-date").value = start_date;
+        document.getElementById("end-date").value = end_date;
+
+        document.getElementById("gif").removeAttribute('hidden');
+        const url = `https://api.nasa.gov/planetary/apod?api_key=FRwWjnM4UYUNnzAXZzeScRvnsFBgnhxLWayaNgTK&start_date=${start_date}&end_date=${end_date}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        getData(data);
+        document.getElementById("gif").setAttribute('hidden', 'true');
+    }
+
+    function loadPage() {
+        document.getElementById("start-date").value = localStorage.getItem('start-key');
+        document.getElementById("end-date").value = localStorage.getItem('end-key');
+        index = localStorage.getItem('index-key');
+        if (index == null)
+            index = 0;
+        work();
+    }
+
+    document.addEventListener("keydown", function (e) {
+        if (e.keyCode === 13) {
+            index = 0;
+            work();
+        }
+    });
+</script>
